@@ -8,6 +8,8 @@ import sys
 import urllib.parse
 import urllib.request
 import json
+import boto3
+import pystache
 
 
 def __load_logger(name):
@@ -53,13 +55,17 @@ class Listing:
     def link(self):
         return 'https://www.ksl.com/classifieds/listing/' + str(self.listing_id)
 
-    def to_json(self):
+    def to_dict(self):
         properties = self.__dict__
         properties['link'] = self.link
-        return json.dumps(properties)
+        return properties
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
 
 def __query_recent_listings(min_price, max_price, zip_code, search_radius):
+    logger.info('Querying KSL Classifieds')
     base_url = 'https://www.ksl.com/classifieds/search/?'
     params = {
         'keyword': '',
@@ -92,7 +98,7 @@ def __query_recent_listings(min_price, max_price, zip_code, search_radius):
             continue
 
         new_listing = Listing()
-        new_listing.listing_id = html['data-item-id']
+        new_listing.listing_id = int(html['data-item-id'])
         new_listing.title = html.find(class_='title').find('a').next.strip()
         new_listing.price = __price_to_int(html.find(class_='price').next.strip())
         new_listing.description = html.find(class_='description-text').next.strip()
@@ -112,15 +118,52 @@ def __int_to_price(price):
 
 
 def __price_to_int(price):
-    print(price)
     return int(price.rsplit('.', 1)[0].lstrip('$').replace(',', ''))
 
 
-def __getenv(var, default):
-    """os.getenv wrapper that also handles empty strings"""
-    env = os.getenv(var)
-    if env == "" or env is None:
+def __getenv(key, default=None):
+    """os.getenv alternative that also handles empty strings"""
+    value = os.getenv(key, None)
+    if value == "" or value == None:
         return default
+    return value
+
+
+def __template(path, data):
+    with open(path) as f:
+        template = f.read()
+        return pystache.render(template, data)
+
+
+def __template_listing(listing):
+    return __template('templates/listing.txt', listing.to_dict())
+
+
+def __template_listing_subject(listing):
+    return __template('templates/subject.txt', listing.to_dict())
+
+
+def __push_listings(listings):
+    logger.debug('Accessing AWS resources')
+    region = __getenv('AWS_REGION', 'us-west-2')
+    sns = boto3.client('sns', region_name=region)
+    dynamodb = boto3.resource('dynamodb', region_name=region)
+    table = dynamodb.Table(__getenv('AWS_DYNAMODB_TABLE'))
+
+    logger.info('Publishing listings')
+    for listing in listings:
+        listing_record = table.get_item(
+            Key={'listing_id': listing.listing_id}
+        ).get('Item', None)
+
+        if not listing_record:
+            sns.publish(
+                TopicArn=__getenv('AWS_SNS_TOPIC'),
+                Subject=__template_listing_subject(listing).strip(),
+                Message=__template_listing(listing)
+            )
+            table.put_item(Item=listing.to_dict())
+            logger.debug(listing.to_json())
 
 
 def main():
@@ -138,8 +181,8 @@ def main():
         search_radius=search_radius
     )
 
-    for listing in listings:
-        logger.debug(listing.to_json())
+    __push_listings(listings)
+
 
 if __name__ == '__main__':
     main()
