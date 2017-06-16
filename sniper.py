@@ -151,10 +151,10 @@ def __push_listings(listings):
         ).get('Item', None)
 
         if not listing_record:
-            subject = renderer.render_path(
+            subject = ''.join(renderer.render_path(
                 'templates/subject.mustache',
                 listing.to_dict()
-            )[:99]
+            ).splitlines())[:99]
             message = renderer.render_path(
                 'templates/listing.mustache',
                 listing.to_dict()
