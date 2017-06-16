@@ -10,6 +10,7 @@ import urllib.request
 import json
 import boto3
 import pystache
+import html
 
 
 def __load_logger(name):
@@ -64,6 +65,10 @@ class Listing:
         return json.dumps(self.to_dict())
 
 
+def __sanitize_html_string(s):
+    return html.unescape(s.strip())
+
+
 def __query_recent_listings(min_price, max_price, zip_code, search_radius):
     logger.info('Querying KSL Classifieds')
     base_url = 'https://www.ksl.com/classifieds/search/?'
@@ -99,9 +104,9 @@ def __query_recent_listings(min_price, max_price, zip_code, search_radius):
 
         new_listing = Listing()
         new_listing.listing_id = int(html['data-item-id'])
-        new_listing.title = html.find(class_='title').find('a').next.strip()
+        new_listing.title = __sanitize_html_string(html.find(class_='title').find('a').next)
         new_listing.price = __price_to_int(html.find(class_='price').next.strip())
-        new_listing.description = html.find(class_='description-text').next.strip()
+        new_listing.description = __sanitize_html_string(html.find(class_='description-text').next.strip())
         new_listing.photo_link = __parse_photo_link(html.find(class_='photo').find('a').find('img')['src'])
         listings.append(new_listing)
     return listings
@@ -129,20 +134,6 @@ def __getenv(key, default=None):
     return value
 
 
-def __template(path, data):
-    with open(path) as f:
-        template = f.read()
-        return pystache.render(template, data)
-
-
-def __template_listing(listing):
-    return __template('templates/listing.txt', listing.to_dict())
-
-
-def __template_listing_subject(listing):
-    return __template('templates/subject.txt', listing.to_dict())
-
-
 def __push_listings(listings):
     logger.debug('Accessing AWS resources')
     region = __getenv('AWS_REGION', 'us-west-2')
@@ -151,16 +142,28 @@ def __push_listings(listings):
     table = dynamodb.Table(__getenv('AWS_DYNAMODB_TABLE'))
 
     logger.info('Publishing listings')
+
+    renderer = pystache.Renderer()
+
     for listing in listings:
         listing_record = table.get_item(
             Key={'listing_id': listing.listing_id}
         ).get('Item', None)
 
         if not listing_record:
+            subject = renderer.render_path(
+                'templates/subject.mustache',
+                listing.to_dict()
+            )[:99]
+            message = renderer.render_path(
+                'templates/listing.mustache',
+                listing.to_dict()
+            )
+            print(subject)
             sns.publish(
                 TopicArn=__getenv('AWS_SNS_TOPIC'),
-                Subject=__template_listing_subject(listing).strip(),
-                Message=__template_listing(listing)
+                Subject=subject,
+                Message=message
             )
             table.put_item(Item=listing.to_dict())
             logger.debug(listing.to_json())

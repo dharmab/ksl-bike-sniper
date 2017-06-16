@@ -1,6 +1,7 @@
 # KSL Bike Sniper
 
-A script for parsing motorcycle listings on KSL.com
+A script for parsing motorcycle listings on KSL.com, and forwarding interesting
+ones to my email.
 
 ## Configuration
 
@@ -37,3 +38,9 @@ This application does accept any ingress connections.
 
 - `443/TCP HTTPS www.ksl.com`: Used to query recent classified listings.
 - `443/TCP HTTPS <AWS Netblocks>`: Used to persist listing data in DynamoDB and send emails via SNS
+
+## Changelog
+
+### 1.0.0
+
+First versioned release
