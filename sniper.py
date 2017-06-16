@@ -169,6 +169,17 @@ def __push_listings(listings):
             logger.debug(listing.to_json())
 
 
+def __filter_listings(listings, included_terms=[], excluded_terms=[]):
+    logger.info('Filtering listings for search terms')
+    if included_terms:
+        listings = [l for l in listings if any(term.lower() in (l.title + l.description).lower() for term in included_terms)]
+
+    if excluded_terms:
+        listings = [l for l in listings if all(term.lower() not in (l.title + l.description).lower() for term in excluded_terms)]
+
+    return listings
+
+
 def main():
     min_price = int(__getenv('MIN_PRICE', default='1000'))  # $1k
     max_price = int(__getenv('MAX_PRICE', default='100000'))  # $100k
@@ -182,6 +193,19 @@ def main():
         max_price=max_price,
         zip_code=zip_code,
         search_radius=search_radius
+    )
+
+    included_terms=__getenv('INCLUDED_SEARCH_TERMS')
+    if included_terms:
+        included_terms = included_terms.split(',')
+    excluded_terms=__getenv('EXCLUDED_SEARCH_TERMS')
+    if excluded_terms:
+        excluded_terms = excluded_terms.split(',')
+
+    listings = __filter_listings(
+        listings=listings,
+        included_terms=included_terms,
+        excluded_terms=excluded_terms
     )
 
     __push_listings(listings)
