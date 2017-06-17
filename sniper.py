@@ -105,8 +105,8 @@ def __query_recent_listings(min_price, max_price, zip_code, search_radius):
         new_listing = Listing()
         new_listing.listing_id = int(html['data-item-id'])
         new_listing.title = __sanitize_html_string(html.find(class_='title').find('a').next)
-        new_listing.price = __price_to_int(html.find(class_='price').next.strip())
-        new_listing.description = __sanitize_html_string(html.find(class_='description-text').next.strip())
+        new_listing.price = __price_to_int(html.find(class_='price').next)
+        new_listing.description = __sanitize_html_string(html.find(class_='description-text').next)
         new_listing.photo_link = __parse_photo_link(html.find(class_='photo').find('a').find('img')['src'])
         listings.append(new_listing)
     return listings
@@ -123,7 +123,7 @@ def __int_to_price(price):
 
 
 def __price_to_int(price):
-    return int(price.rsplit('.', 1)[0].lstrip('$').replace(',', ''))
+    return int(price.strip().rsplit('.', 1)[0].lstrip('$').replace(',', ''))
 
 
 def __getenv(key, default=None):
