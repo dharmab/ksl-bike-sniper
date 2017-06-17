@@ -145,6 +145,7 @@ def __push_listings(listings):
 
     renderer = pystache.Renderer()
 
+    published_counter = 0
     for listing in listings:
         listing_record = table.get_item(
             Key={'listing_id': listing.listing_id}
@@ -166,7 +167,12 @@ def __push_listings(listings):
                 Message=message
             )
             table.put_item(Item=listing.to_dict())
+            published_counter += 1
             logger.debug(listing.to_json())
+    if published_counter > 0:
+        logger.info("Published {} listings")
+    else:
+        logger.info("No new listings to publish!")
 
 
 def __filter_listings(listings, included_terms=[], excluded_terms=[]):
