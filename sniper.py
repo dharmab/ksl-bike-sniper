@@ -170,7 +170,7 @@ def __push_listings(listings):
             published_counter += 1
             logger.debug(listing.to_json())
     if published_counter > 0:
-        logger.info("Published {} listings")
+        logger.info("Published {} listings".format_map(published_counter))
     else:
         logger.info("No new listings to publish!")
 
