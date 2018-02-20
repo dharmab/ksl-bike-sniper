@@ -85,8 +85,10 @@ def __query_recent_listings(min_price, max_price, zip_code, search_radius):
 
     logger.debug('Found %d listings', len(listings))
 
+    # Sanitize content
     for listing in listings:
-        listing['photo'] = 'https:' + listing['photo']
+        listing['photo'] = 'https:{}'.format(listing['photo'])
+        listing['link'] = 'https://www.ksl.com/classifieds/listing/{}'.format(listing['id'])
 
     return listings
 
