@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
 from bs4 import BeautifulSoup
+import boto3
+import html
+import json
 import logging
 import os
+import pystache
+import re
 import sys
 import urllib.parse
 import urllib.request
-import json
-import boto3
-import pystache
-import html
 
 
 def __load_logger(name):
@@ -46,26 +47,6 @@ def __load_logger(name):
 logger = __load_logger(__name__)
 
 
-class Listing:
-    listing_id = 0
-    title = ''
-    description = ''
-    price = 0
-    photo_link = ''
-
-    @property
-    def link(self):
-        return 'https://www.ksl.com/classifieds/listing/' + str(self.listing_id)
-
-    def to_dict(self):
-        properties = self.__dict__
-        properties['link'] = self.link
-        return properties
-
-    def to_json(self):
-        return json.dumps(self.to_dict())
-
-
 def __sanitize_html_string(s):
     return html.unescape(s.strip())
 
@@ -95,36 +76,23 @@ def __query_recent_listings(min_price, max_price, zip_code, search_radius):
     raw_html = urllib.request.urlopen(request).read()
 
     raw_soup = BeautifulSoup(raw_html, 'html.parser')
-    listings_html = raw_soup.find_all('div', class_='listing')
+    script = [s.get_text() for s in raw_soup.find_all('script') if "listings:" in s.get_text()][0]
+    listings_json = re.search('listings:\s*(\[.*\])', script).group(1)
+    listings = json.loads(listings_json)
 
-    listings = []
-    for html_content in listings_html:
-        # Skip ads
-        if html_content.find(class_='featured'):
-            continue
+    # Remove ads
+    listings = [l for l in listings if l['listingType'] != 'featured']
 
-        new_listing = Listing()
-        new_listing.listing_id = int(html_content['data-item-id'])
-        new_listing.title = __sanitize_html_string(html_content.find(class_='title').find('a').next)
-        new_listing.price = __price_to_int(html_content.find(class_='price').next)
-        new_listing.description = __sanitize_html_string(html_content.find(class_='description-text').next)
-        new_listing.photo_link = __parse_photo_link(html_content.find(class_='photo').find('a').find('img')['src'])
-        listings.append(new_listing)
+    logger.debug('Found %d listings', len(listings))
+
+    for listing in listings:
+        listing['photo'] = 'https:' + listing['photo']
+
     return listings
-
-
-def __parse_photo_link(raw_link):
-    """Turn a listing's partial photo link into a full link"""
-    # Remove everything after the last '?' to get the full resolution link
-    return 'https:' + raw_link.rsplit('?', 1)[0]
 
 
 def __int_to_price(price):
     return '$' + '{:,}'.format(price)
-
-
-def __price_to_int(price):
-    return int(price.strip().rsplit('.', 1)[0].lstrip('$').replace(',', ''))
 
 
 def __getenv(key, default=None):
@@ -149,17 +117,17 @@ def __push_listings(listings):
     published_counter = 0
     for listing in listings:
         listing_record = table.get_item(
-            Key={'listing_id': listing.listing_id}
+            Key={'listing_id': listing['id']}
         ).get('Item', None)
 
         if not listing_record:
             subject = ''.join(renderer.render_path(
                 'templates/subject.mustache',
-                listing.to_dict()
+                listing
             ).splitlines())[:99]
             message = renderer.render_path(
                 'templates/listing.mustache',
-                listing.to_dict()
+                listing
             )
             print(subject)
             sns.publish(
@@ -167,9 +135,9 @@ def __push_listings(listings):
                 Subject=subject,
                 Message=message
             )
-            table.put_item(Item=listing.to_dict())
+            table.put_item(Item={'listing_id': listing['id']})
             published_counter += 1
-            logger.debug(listing.to_json())
+            logger.debug(listing)
     if published_counter > 0:
         logger.info("Published {} listings".format(published_counter))
     else:
@@ -179,10 +147,10 @@ def __push_listings(listings):
 def __filter_listings(listings, included_terms=[], excluded_terms=[]):
     logger.info('Filtering listings for search terms')
     if included_terms:
-        listings = [l for l in listings if any(term.lower() in (l.title + l.description).lower() for term in included_terms)]
+        listings = [l for l in listings if any(term.lower() in (l['title'] + l['description']).lower() for term in included_terms)]
 
     if excluded_terms:
-        listings = [l for l in listings if all(term.lower() not in (l.title + l.description).lower() for term in excluded_terms)]
+        listings = [l for l in listings if all(term.lower() not in (l['title'] + l['description']).lower() for term in excluded_terms)]
 
     return listings
 
