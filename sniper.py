@@ -3,7 +3,6 @@
 from bs4 import BeautifulSoup
 import logging
 import os
-import string
 import sys
 import urllib.parse
 import urllib.request
@@ -43,7 +42,9 @@ def __load_logger(name):
 
     return new_logger
 
+
 logger = __load_logger(__name__)
+
 
 class Listing:
     listing_id = 0
@@ -96,18 +97,18 @@ def __query_recent_listings(min_price, max_price, zip_code, search_radius):
     raw_soup = BeautifulSoup(raw_html, 'html.parser')
     listings_html = raw_soup.find_all('div', class_='listing')
 
-    listings=[]
-    for html in listings_html:
+    listings = []
+    for html_content in listings_html:
         # Skip ads
-        if html.find(class_='featured'):
+        if html_content.find(class_='featured'):
             continue
 
         new_listing = Listing()
-        new_listing.listing_id = int(html['data-item-id'])
-        new_listing.title = __sanitize_html_string(html.find(class_='title').find('a').next)
-        new_listing.price = __price_to_int(html.find(class_='price').next)
-        new_listing.description = __sanitize_html_string(html.find(class_='description-text').next)
-        new_listing.photo_link = __parse_photo_link(html.find(class_='photo').find('a').find('img')['src'])
+        new_listing.listing_id = int(html_content['data-item-id'])
+        new_listing.title = __sanitize_html_string(html_content.find(class_='title').find('a').next)
+        new_listing.price = __price_to_int(html_content.find(class_='price').next)
+        new_listing.description = __sanitize_html_string(html_content.find(class_='description-text').next)
+        new_listing.photo_link = __parse_photo_link(html_content.find(class_='photo').find('a').find('img')['src'])
         listings.append(new_listing)
     return listings
 
@@ -129,7 +130,7 @@ def __price_to_int(price):
 def __getenv(key, default=None):
     """os.getenv alternative that also handles empty strings"""
     value = os.getenv(key, None)
-    if value == "" or value == None:
+    if value == "" or value is None:
         return default
     return value
 
@@ -201,10 +202,10 @@ def main():
         search_radius=search_radius
     )
 
-    included_terms=__getenv('INCLUDED_SEARCH_TERMS')
+    included_terms = __getenv('INCLUDED_SEARCH_TERMS')
     if included_terms:
         included_terms = included_terms.split(',')
-    excluded_terms=__getenv('EXCLUDED_SEARCH_TERMS')
+    excluded_terms = __getenv('EXCLUDED_SEARCH_TERMS')
     if excluded_terms:
         excluded_terms = excluded_terms.split(',')
 
