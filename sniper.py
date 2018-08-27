@@ -53,7 +53,7 @@ def __sanitize_html_string(s):
 
 def __query_recent_listings(min_price, max_price, zip_code, search_radius):
     logger.info('Querying KSL Classifieds')
-    base_url = 'https://www.ksl.com/classifieds/search/?'
+    base_url = 'https://classifieds.ksl.com/search/?'
     params = {
         'keyword': '',
         'category[]': 'Recreational Vehicles',
