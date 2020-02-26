@@ -41,6 +41,36 @@ You need Docker and Make.
 
 There are no unit tests, but `make ci` will run code quality checks.
 
+## Deploy
+
+- Create a DynamoDB table with a primary key named `listing_id` of type Number. This table is used to track which KSL listings have been processed across runs. I also recommend lowering the provisioned read and write capacity to 1 and configuring `ttl` as the TTL attribute.
+- Create an SNS topic and add your email as a subscription.
+- Create an IAM policy:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "sns:Publish",
+                "dynamodb:PutItem",
+                "dynamodb:GetItem"
+            ],
+            "Resource": [
+                "DynamoDB-Table-ARN",
+                "SNS-Topic-ARN"
+            ]
+        }
+    ]
+}
+```
+
+- Bind the IAM policy to a role or user.
+- Run as a scheduled job however you like. Systemd timer, Kubernetes CronJob, ECS Fargate Scheduled Task, for loop in a screen session on some forgotten server...
+
 ## Network and Security
 
 ### Ingress 
