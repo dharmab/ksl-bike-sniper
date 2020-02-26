@@ -15,8 +15,16 @@ import urllib.parse
 import urllib.request
 
 
+def _getenv(key: str, default: Optional[str] = None) -> Optional[str]:
+    "os.getenv alternative that also handles empty strings"
+    value = os.getenv(key, None)
+    if not value:
+        value = default
+    return value
+
+
 def _load_logger(name: str) -> logging.Logger:
-    """Configure a logger which logs to standard out"""
+    "Configure a logger which logs to standard out"
     new_logger = logging.getLogger(name)
 
     # Initial setup
@@ -30,7 +38,8 @@ def _load_logger(name: str) -> logging.Logger:
         new_logger.addHandler(stdout_handler)
 
         # Set logging level
-        log_level_string = os.getenv("LOG_LEVEL", "WARNING")
+        log_level_string = _getenv("LOG_LEVEL", default="WARNING")
+        assert log_level_string
         log_level_map = {
             "CRITICAL": logging.CRITICAL,
             "ERROR": logging.ERROR,
@@ -117,14 +126,6 @@ def _int_to_price(price: int) -> str:
     return "$" + "{:,}".format(price)
 
 
-def _getenv(key: str, default: Optional[str] = None) -> Optional[str]:
-    "os.getenv alternative that also handles empty strings"
-    value = os.getenv(key, None)
-    if not value:
-        value = default
-    return value
-
-
 def _push_listings(listings: List[dict]) -> None:
     logger.debug("Accessing AWS resources")
     region = _getenv("AWS_REGION", "us-west-2")
@@ -142,7 +143,6 @@ def _push_listings(listings: List[dict]) -> None:
         listing_record = table.get_item(Key={"listing_id": listing["id"]}).get(
             "Item", None
         )
-
         if not listing_record:
             subject = "".join(
                 renderer.render_path("templates/subject.mustache", listing).splitlines()
