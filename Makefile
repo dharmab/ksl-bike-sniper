@@ -1,4 +1,4 @@
-.PHONY: default build
+.PHONY: default build run format check
 
 PROJECT = ksl-bike-sniper
 
@@ -22,3 +22,11 @@ run: build
 	-e EXCLUDED_SEARCH_TERMS="$$EXCLUDED_SEARCH_TERMS" \
 	-e LOG_LEVEL=$$LOG_LEVEL \
 	$(PROJECT)
+
+format:
+	black sniper.py
+
+ci:
+	mypy sniper.py
+	flake8 --ignore=E501 sniper.py
+	black --check sniper.py

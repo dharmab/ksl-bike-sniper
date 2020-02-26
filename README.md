@@ -21,7 +21,7 @@ Configuration is set via environment variables.
 - `AWS_REGION`: Name of AWS region containing DynamoDB table and SNS topic. The default is `'us-west-2'`.
 - `INCLUDED_SEARCH_TERMS`: Comma-separated list of search terms. Only listings which include at least one search term will be forwarded. Terms are case-insensitive. Example: `'Honda,Kawasaki,Suzuki,Yamaha'`. This is not used unless defined.
 - `EXCLUDED_SEARCH_TERMS`: Comma-separated list of search terms. Only listings which do not include any search term will be forwarded. Terms are case-insensitive. Example: `'Hyosung,scooter'`. This is not used unless defined.
-- `LOG_LEVEL`: Logging verbosity. Set to `DEBUG` for development. The default is `WARN`.
+- `LOG_LEVEL`: Logging verbosity. Set to `DEBUG` for development. The default is `WARNING`.
 
 ## Build
 
@@ -32,6 +32,14 @@ You need Docker and Make.
 ## Run
 
 `make run` will build and run a Docker container.
+
+## Format
+
+`make format` will autoformat the code.
+
+## Test
+
+There are no unit tests, but `make ci` will run code quality checks.
 
 ## Network and Security
 
