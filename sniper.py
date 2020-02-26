@@ -3,6 +3,7 @@
 from bs4 import BeautifulSoup
 from typing import List, Optional
 import boto3
+import datetime
 import html
 import json
 import logging
@@ -130,6 +131,7 @@ def _push_listings(listings: List[dict]) -> None:
     sns = boto3.client("sns", region_name=region)
     dynamodb = boto3.resource("dynamodb", region_name=region)
     table = dynamodb.Table(_getenv("AWS_DYNAMODB_TABLE"))
+    ttl = int((datetime.datetime.now() + datetime.timedelta(days=90)).timestamp())
 
     logger.info("Publishing listings")
 
@@ -150,7 +152,7 @@ def _push_listings(listings: List[dict]) -> None:
             sns.publish(
                 TopicArn=_getenv("AWS_SNS_TOPIC"), Subject=subject, Message=message
             )
-            table.put_item(Item={"listing_id": listing["id"]})
+            table.put_item(Item={"listing_id": listing["id"], "ttl": ttl})
             published_counter += 1
             logger.debug(listing)
     if published_counter > 0:
