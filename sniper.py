@@ -51,13 +51,13 @@ def __sanitize_html_string(s):
     return html.unescape(s.strip())
 
 
-def __query_recent_listings(min_price, max_price, zip_code, search_radius):
+def __query_recent_listings(category, subcategory, min_price, max_price, zip_code, search_radius):
     logger.info('Querying KSL Classifieds')
     base_url = 'https://classifieds.ksl.com/search/?'
     params = {
         'keyword': '',
-        'category[]': 'Recreational Vehicles',
-        'subCategory[]': 'Motorcycles, Road Bikes Used',
+        'category[]': category,
+        'subCategory[]': subcategory,
         'hasPhotos[]': 'Has Photos',
         'priceFrom': __int_to_price(min_price),
         'priceTo': __int_to_price(max_price),
@@ -158,6 +158,8 @@ def __filter_listings(listings, included_terms=[], excluded_terms=[]):
 
 
 def main():
+    category = __getenv('CATEGORY', default="Recreational Vehicles")
+    subcategory = __getenv('SUBCATEGORY', default="Motorcycles, Road Bikes Used")
     min_price = int(__getenv('MIN_PRICE', default='1000'))  # $1k
     max_price = int(__getenv('MAX_PRICE', default='100000'))  # $100k
     zip_code = __getenv('ZIP_CODE', default='84102')  # Temple Square
@@ -166,6 +168,8 @@ def main():
     logger.debug("Price range: {} to {}".format(min_price, max_price))
     logger.debug("Search area: {} miles around {}".format(search_radius, zip_code))
     listings = __query_recent_listings(
+        category=category,
+        subcategory=subcategory,
         min_price=min_price,
         max_price=max_price,
         zip_code=zip_code,

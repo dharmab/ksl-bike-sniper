@@ -1,12 +1,15 @@
 # KSL Bike Sniper
 
-A script for parsing motorcycle listings on KSL.com, and forwarding interesting
-ones to my email.
+A script for parsing listings on KSL.com, and forwarding interesting ones to my
+email. Originally used for used motorcycles, but has been expanded to allow
+searching for most of the site.
 
 ## Configuration
 
 Configuration is set via environment variables.
 
+- `CATEGORY`: KSL listing category. The default is `Recreational Vehicles`.
+- `SUBCATEGORY`: KSL listing subcategory. The default is `Motorcycles, Road Bikes Used`.
 - `MIN_PRICE`: The lowest price to search for, in USD. The default is `1000` ($1k).
 - `MAX_PRICE`: The highest price to search for, in USD. The default is `100000` ($100k).
 - `ZIP_CODE`: ZIP code where search will be centered. The default is `84102` (Temple Square, downtown Salt Lake City).
