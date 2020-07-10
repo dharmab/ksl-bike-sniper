@@ -1,0 +1,83 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ksl-bike-sniper
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-key
+  namespace: ksl-bike-sniper
+type: Opaque
+stringData:
+  accessKeyId: ""
+  secretAccessKey: ""
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: ksl-bike-sniper
+  namespace: ksl-bike-sniper
+  labels:
+    app: ksl-bike-sniper
+spec:
+  concurrencyPolicy: Forbid
+  schedule: "*/1 * * * *"
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: ksl-bike-sniper
+        spec:
+          containers:
+          - name: sniper
+            image: dharmab/ksl-bike-sniper:2.1.0
+            env:
+            - name: CATEGORY
+              value: Recreational Vehicles
+            - name: SUBCATEGORY
+              value: "Motorcycles, Road Bikes Used"
+            - name: MIN_PRICE
+              value: "1000"
+            - name: MAX_PRICE
+              value: "100000"
+            - name: ZIP_CODE
+              value: "84094"
+            - name: SEARCH_RADIUS
+              value: "100"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-key
+                  key: accessKeyId
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-key
+                  key: secretAccessKey
+            - name: AWS_REGION
+              value: us-east-2
+            - name: AWS_DYNAMODB_TABLE
+              value: <table name>
+            - name: AWS_SNS_TOPIC
+              value: <topic arn>
+          restartPolicy: OnFailure
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ksl-bike-sniper
+  namespace: ksl-bike-sniper
+spec:
+  policyTypes:
+  - Egress
+  podSelector:
+    matchLabels:
+      app: ksl-bike-sniper
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0

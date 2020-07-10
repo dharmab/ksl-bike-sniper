@@ -69,7 +69,7 @@ There are no unit tests, but `make ci` will run code quality checks.
 ```
 
 - Bind the IAM policy to a role or user.
-- Run as a scheduled job however you like. Systemd timer, Kubernetes CronJob, ECS Fargate Scheduled Task, for loop in a screen session on some forgotten server...
+- Run as a scheduled job however you like. Systemd timer, [Kubernetes CronJob](deploy/kubernetes), ECS Fargate Scheduled Task, for loop in a screen session on some forgotten server...
 
 ## Network and Security
 
