@@ -143,20 +143,30 @@ def _push_listings(listings: List[dict]) -> None:
         listing_record = table.get_item(Key={"listing_id": listing["id"]}).get(
             "Item", None
         )
+
         if not listing_record:
-            subject = "".join(
-                renderer.render_path("templates/subject.mustache", listing).splitlines()
-            )[:99]
-            message = renderer.render_path("templates/listing.mustache", listing)
+            subject = "{} - ${}".format(listing["title"], listing["price"])[:99]
+
             logger.info(subject)
+            logger.debug(listing)
+
+            message = "\n".join(
+                subject,
+                f'<img src="{listing.photo_url}" alt="{subject}" />',
+                listing["description"],
+                "",
+                linking["link"],
+            )
+
             sns.publish(
                 TopicArn=_getenv("AWS_SNS_TOPIC"), Subject=subject, Message=message
             )
             table.put_item(Item={"listing_id": listing["id"], "ttl": ttl})
+
             published_counter += 1
-            logger.debug(listing)
+
     if published_counter > 0:
-        logger.info("Published {} listings".format(published_counter))
+        logger.info(f"Published {published_counter} listings")
     else:
         logger.info("No new listings to publish!")
 
@@ -209,8 +219,9 @@ def main() -> None:
     search_radius = _getenv("SEARCH_RADIUS", default="100")  # 100 miles
     assert search_radius
 
-    logger.debug("Price range: {} to {}".format(min_price, max_price))
-    logger.debug("Search area: {} miles around {}".format(search_radius, zip_code))
+    logger.debug(f"Price range: {min_price} to {max_price}")
+    logger.debug(f"Search area: {search_radius} miles around {zip_code}")
+
     listings = _query_recent_listings(
         category=category,
         subcategory=subcategory,
