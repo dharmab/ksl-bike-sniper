@@ -151,7 +151,7 @@ def _push_listings(listings: List[dict]) -> None:
                 [
                     subject,
                     '<img src="{}" alt="{}" />'.format(
-                        listing["photo_url"], listing["title"]
+                        listing["photo"], listing["title"]
                     ),
                     listing["description"],
                     "",

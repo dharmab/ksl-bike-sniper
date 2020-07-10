@@ -34,7 +34,7 @@ spec:
         spec:
           containers:
           - name: sniper
-            image: dharmab/ksl-bike-sniper:2.2.0
+            image: dharmab/ksl-bike-sniper:2.2.1
             env:
             - name: CATEGORY
               value: Recreational Vehicles
