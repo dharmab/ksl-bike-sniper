@@ -148,7 +148,7 @@ def _push_listings(listings: List[dict]) -> None:
                 renderer.render_path("templates/subject.mustache", listing).splitlines()
             )[:99]
             message = renderer.render_path("templates/listing.mustache", listing)
-            print(subject)
+            logger.info(subject)
             sns.publish(
                 TopicArn=_getenv("AWS_SNS_TOPIC"), Subject=subject, Message=message
             )
