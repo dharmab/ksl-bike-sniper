@@ -8,7 +8,6 @@ import html
 import json
 import logging
 import os
-import pystache
 import re
 import sys
 import urllib.parse
@@ -136,8 +135,6 @@ def _push_listings(listings: List[dict]) -> None:
 
     logger.info("Publishing listings")
 
-    renderer = pystache.Renderer()
-
     published_counter = 0
     for listing in listings:
         listing_record = table.get_item(Key={"listing_id": listing["id"]}).get(
@@ -151,11 +148,15 @@ def _push_listings(listings: List[dict]) -> None:
             logger.debug(listing)
 
             message = "\n".join(
-                subject,
-                f'<img src="{listing.photo_url}" alt="{subject}" />',
-                listing["description"],
-                "",
-                linking["link"],
+                [
+                    subject,
+                    '<img src="{}" alt="{}" />'.format(
+                        listing["photo_url"], listing["title"]
+                    ),
+                    listing["description"],
+                    "",
+                    listing["link"],
+                ]
             )
 
             sns.publish(
