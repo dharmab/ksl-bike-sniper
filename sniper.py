@@ -149,10 +149,8 @@ def _push_listings(listings: List[dict]) -> None:
 
             message = "\n".join(
                 [
-                    subject,
-                    '<img src="{}" alt="{}" />'.format(
-                        listing["photo"], listing["title"]
-                    ),
+                    listing["title"],
+                    "",
                     listing["description"],
                     "",
                     listing["link"],
