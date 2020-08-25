@@ -23,7 +23,8 @@ metadata:
     app: ksl-bike-sniper
 spec:
   concurrencyPolicy: Forbid
-  schedule: "*/1 * * * *"
+  schedule: "*/13 6-23 * * *"
+  startingDeadlineSeconds: 300
   successfulJobsHistoryLimit: 1
   jobTemplate:
     spec:
@@ -34,7 +35,7 @@ spec:
         spec:
           containers:
           - name: sniper
-            image: dharmab/ksl-bike-sniper:2.2.2
+            image: dharmab/ksl-bike-sniper:2.2.3
             env:
             - name: CATEGORY
               value: Recreational Vehicles
@@ -44,10 +45,6 @@ spec:
               value: "1000"
             - name: MAX_PRICE
               value: "100000"
-            - name: ZIP_CODE
-              value: "84094"
-            - name: SEARCH_RADIUS
-              value: "100"
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
