@@ -93,7 +93,7 @@ def _query_recent_listings(
     url = base_url + urllib.parse.urlencode(params)
     # Spoof as Chrome to avoid anti-bot measures
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36"
     }
     request = urllib.request.Request(url=url, headers=headers)
     raw_html = urllib.request.urlopen(request).read()
@@ -148,13 +148,7 @@ def _push_listings(listings: List[dict]) -> None:
             logger.debug(listing)
 
             message = "\n".join(
-                [
-                    listing["title"],
-                    "",
-                    listing["description"],
-                    "",
-                    listing["link"],
-                ]
+                [listing["title"], "", listing["description"], "", listing["link"],]
             )
 
             sns.publish(
