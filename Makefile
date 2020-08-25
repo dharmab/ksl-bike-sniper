@@ -23,6 +23,10 @@ run: build
 	-e LOG_LEVEL=$$LOG_LEVEL \
 	$(PROJECT)
 
+install:
+	pip install -r requirements.txt
+	pip install -r requirements-dev.txt
+
 format:
 	black sniper.py
 
