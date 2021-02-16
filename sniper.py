@@ -131,7 +131,7 @@ def _push_listings(listings: List[dict]) -> None:
     sns = boto3.client("sns", region_name=region)
     dynamodb = boto3.resource("dynamodb", region_name=region)
     table = dynamodb.Table(_getenv("AWS_DYNAMODB_TABLE"))
-    ttl = int((datetime.datetime.now() + datetime.timedelta(days=90)).timestamp())
+    ttl = int((datetime.datetime.now() + datetime.timedelta(days=21)).timestamp())
 
     logger.info("Publishing listings")
 
