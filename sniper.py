@@ -154,7 +154,9 @@ def _push_listings(listings: List[dict]) -> None:
             sns.publish(
                 TopicArn=_getenv("AWS_SNS_TOPIC"), Subject=subject, Message=message
             )
-            table.put_item(Item={"listing_id": listing["id"], "ttl": ttl})
+            table.put_item(
+                Item={"partition_key": "0", "listing_id": listing["id"], "ttl": ttl}
+            )
 
             published_counter += 1
 
